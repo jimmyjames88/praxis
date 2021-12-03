@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    #board {
+      display: flex;
+      grid-gap: 4rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="board">
+    <div>
+      <canvas id="canvas" width="352" height="352"></canvas>
+    </div>
+    <div>
+     <canvas id="puzzle" width="352" height="352"></canvas>
+    </div>
+  </div>
+  <hr />
+  <h2>Thoughts / Issues</h2>
+  <ul>
+    <li>Win condition breaks if rectange rotated 180</li>
+    <li>Improve win condition to recognize offset solutions</li>
+    <li>Was having trouble setting and enforcing a stack order</li>
+    <li>Boundary box needed</li>
+    <li>Scoring:
+      <ul>
+        <li>Consider scoring on mousedown and mouseup</li>
+        <li>Should we score single tile correct placements?</li>
+        <li>Score or discard incorrect placements?</li>
+      </ul>
+    </li>
+  </ul>
+
+  <script src="js/fabric.min.js"></script>
+  <script src="js/shapes.js"></script>
+  <script src="js/grid.js"></script>
+  <script>
+    // create a wrapper around native canvas element (with id="c")
+    var canvas = new fabric.Canvas('canvas', {
+      selection: false
+    });
+    var puzzle = new fabric.Canvas('puzzle', {
+      selection: false
+    });
+    
+    // globals
+    var grid = 27
+    var snap = 20
+    var snapAngle = 15
+    var moveCount = 0
+    var log = []
+
+    console.log('Start time: ' + Date.now())
+    createCanvas()
+    createPuzzle()
+
+    function createCanvas() {
+      drawSquareGrid(canvas)
+      drawRectangle(canvas, 0, 0)
+      drawTriangle(canvas, 0, 108)
+      drawHexagon(canvas, 54, 27)
+      drawTrapezoid(canvas, 27, 189)
+      drawPentagon(canvas, 108, 189)
+      drawRhombus(canvas, 216, 216)
+
+      canvas.on('object:moved', function(a, b, c) {
+      canvas.forEachObject(obj => {
+        if (obj.type == 'line') return
+        obj.set('opacity', 1)
+      })
+      moveCount++
+      enforceStackingOrder()
+      scoreTest()
+    })
+
+    canvas.on('object:moving', function(opt) {
+      opt.target.set({
+        left: Math.round(opt.target.left / grid) * grid,
+        top: Math.round(opt.target.top / grid) * grid
+      }).setCoords();
+    })
+  }
+
+  function objectReport() {
+    var report = {
+      canvas: [],
+      puzzle: []
+    }
+    canvas.forEachObject(obj => {
+      if (obj.type != 'line') {
+        report.canvas.push(obj)
+      }
+    })
+    puzzle.forEachObject(obj => {
+      if (obj.type != 'line') {
+        report.puzzle.push(obj)
+      }
+    })
+    return report
+  }
+
+  function scoreTest() {
+    var report = objectReport()
+    var p = report.puzzle
+    var good = 0;
+    console.log(`======= MOVE ${moveCount} ======`)
+    console.log('Timestamp: ' + Date.now())
+    for (const [k, v] of Object.entries(report.canvas)) {
+      console.log(v, p[k])
+      if (
+        v.left == p[k]?.left
+        && v.top == p[k]?.top
+      ) {
+        good++
+      }
+    }
+    console.log('=====================')
+    if (good >= report.canvas.length) {
+      alert('COMPLETED!')
+    }
+  }
+
+  function enforceStackingOrder() {
+    // do something
+  }
+
+  function createPuzzle() {
+    drawSquareGrid(puzzle)
+    drawRectangle(puzzle, 81, 108)
+    drawTriangle(puzzle, 54, 0)
+    drawHexagon(puzzle, 27, 216)
+    drawTrapezoid(puzzle, 54, 54)
+    drawPentagon(puzzle, 108, 189)
+    drawRhombus(puzzle, 81, 54)
+  }
+  </script>
+  
+</body>
+</html>
